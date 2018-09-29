@@ -1,4 +1,4 @@
-﻿import argparse
+import argparse
 import json
 import re
 
@@ -20,9 +20,14 @@ parser = argparse.ArgumentParser(description='Source files have to be names \'ap
 parser.add_argument('--language', '-l', type=str, choices=languages, default='de',
                     help='The desired language in country language code. Defaults to \'de\'')
 
+parser.add_argument('-nft', '--no-flavortext', nargs='?', const=True)
+parser.add_argument('-ndn', '--no-displayname', nargs='?', const=True)
+
 # Sets the language to the desired language
 args = parser.parse_args()
 lang = args.language
+no_flavortext = args.no_flavortext
+no_displayname = args.no_displayname
 
 # load cards in destination language
 data_translation = json.load(open('api_export_' + lang + '.json', encoding="utf8"))
@@ -89,7 +94,8 @@ for card_en in cards_en:
 
     # translate
     output_text += ('        "%s":\n' % card_en["name"])
-    output_text += ('           display_name: """%s"""\n' % card_translation["name"])
+    if not no_displayname:
+        output_text += ('           display_name: """%s"""\n' % card_translation["name"])
     # output_text += ('           ship: """%s"""\n' % ship_translations[str(card_en["ship_type"])]["name_" + lang])
     output_text += ('           text: """%s"""\n' % card_translation["ability_text"])
 
@@ -123,7 +129,8 @@ for card_en in cards_en:
 
     # translate name
     output_text += ('        "%s":\n' % card_en["name"])
-    output_text += ('           display_name: """%s"""\n' % card_translation["name"])
+    if not no_displayname:
+        output_text += ('           display_name: """%s"""\n' % card_translation["name"])
 
     # check if card has requirements
     if card_en["restrictions"]:
@@ -219,6 +226,10 @@ for card_en in cards_en:
     output_text += ('           text: """%s"""\n' % card_translation["ability_text"])
 
 # do some replacements
+if no_flavortext:
+    output_text = re.sub(r'<flavor>.+<\/flavor>', '', output_text)
+    output_text = output_text.replace('"""<return>', '')
+    output_text = output_text.replace('""""""', '""" """')
 output_text = output_text.replace('<stop>', '%STOP%')
 output_text = output_text.replace('<leftbank>', '%BANKLEFT%')
 output_text = output_text.replace('<rightbank>', '%BANKRIGHT%')
