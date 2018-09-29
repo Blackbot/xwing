@@ -20,14 +20,16 @@ parser = argparse.ArgumentParser(description='Source files have to be names \'ap
 parser.add_argument('--language', '-l', type=str, choices=languages, default='de',
                     help='The desired language in country language code. Defaults to \'de\'')
 
-parser.add_argument('-nft', '--no-flavortext', nargs='?', const=True)
-parser.add_argument('-ndn', '--no-displayname', nargs='?', const=True)
+parser.add_argument('-nft', '--no-flavortext', nargs='?', const=True, help='Omits any flavortext from the output.')
+parser.add_argument('-ndn', '--no-displayname', nargs='?', const=True, help='Omits all display names from the output.')
+parser.add_argument('-ns', '--no-shipname', nargs='?', const=True, help='Omits "ship" field from titles.')
 
 # Sets the language to the desired language
 args = parser.parse_args()
 lang = args.language
 no_flavortext = args.no_flavortext
 no_displayname = args.no_displayname
+no_shipname = args.no_shipname
 
 # load cards in destination language
 data_translation = json.load(open('api_export_' + lang + '.json', encoding="utf8"))
@@ -55,7 +57,7 @@ for card_en in cards_en:
     card_en["name"] = card_en["name"].replace('•', '')
     card_en["name"] = card_en["name"].replace('<italic>', '')
     card_en["name"] = card_en["name"].replace('</italic>', '')
-cards_en = sorted(cards_en, key=lambda k: k['name'].upper())
+cards_en = sorted(cards_en, key=lambda k: k['name'].strip('“').upper())
 
 # load names changed by yasb
 renamed_cards = json.load(open('renamed_cards.json', encoding="utf8"))
@@ -148,8 +150,10 @@ for card_en in cards_en:
             # if restricted to ship type (e.g.  titles), add a line to the
             # translation specifying the ship
             if restriction[0]["type"] == "SHIP_TYPE":
-                if len(restriction) == 1:
-                    output_text += ('           ship: """%s"""\n' % ship_translations[str(restriction[0]["kwargs"]["pk"])]["name_" + lang])
+                if len(restriction) == 1 and not no_shipname:
+                    output_text += (
+                            '           ship: """%s"""\n' % ship_translations[str(restriction[0]["kwargs"]["pk"])][
+                        "name_" + lang])
                 if len(restriction) > 1:
                     ships = ""
                     for ship in restriction:
