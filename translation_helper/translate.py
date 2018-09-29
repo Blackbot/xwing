@@ -50,7 +50,12 @@ manual_stuff = "Please edit the following cards manually: \nL3-37's programming\
 pilot_name_list = {}
 
 # sort by name
-cards_en = sorted(cards_en, key=lambda k: k['name'])
+# Remove the unique-dot from all cards as well as italics (otherwise sorting breaks)
+for card_en in cards_en:
+    card_en["name"] = card_en["name"].replace('•', '')
+    card_en["name"] = card_en["name"].replace('<italic>', '')
+    card_en["name"] = card_en["name"].replace('</italic>', '')
+cards_en = sorted(cards_en, key=lambda k: k['name'].upper())
 
 # load names changed by yasb
 renamed_cards = json.load(open('renamed_cards.json', encoding="utf8"))
